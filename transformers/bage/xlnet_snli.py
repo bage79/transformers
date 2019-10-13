@@ -3,6 +3,7 @@ Ref: http://mccormickml.com/2019/09/19/XLNet-fine-tuning/
 """
 
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,13 +22,14 @@ use_gpu = False
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '6'
     num_batch = 112
+    glue_data_dir = os.path.join(str(Path.home()), "glue_data")
 
     cola = True
-    cola_train = "glue_data/CoLA/original/tokenized/in_domain_train.tsv"
-    cola_dev = "glue_data/CoLA/original/raw/out_of_domain_dev.tsv"
+    cola_train = os.path.join(glue_data_dir, "CoLA/original/tokenized/in_domain_train.tsv")
+    cola_dev = os.path.join(glue_data_dir, "CoLA/original/raw/out_of_domain_dev.tsv")
 
-    snli_train = "glue_data/SNLI/train.tsv"
-    snli_test = "glue_data/SNLI/test.tsv"
+    snli_train = os.path.join(glue_data_dir, "SNLI/train.tsv")
+    snli_test = os.path.join(glue_data_dir, "SNLI/test.tsv")
 
     tokenizer = XLNetTokenizer.from_pretrained('xlnet-base-cased', do_lower_case=True)
 

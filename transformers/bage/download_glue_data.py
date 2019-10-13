@@ -1,4 +1,6 @@
 """ https://github.com/nyu-mll/jiant/blob/master/scripts/download_glue_data.py """
+from pathlib import Path
+
 """ Script for downloading all GLUE data.
 Example usage:
     python download_glue_data.py --data_dir data --tasks all
@@ -135,7 +137,7 @@ def get_tasks(task_names):
 def main(arguments):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--data_dir", help="directory to save data to", type=str, default="glue_data"
+        "--data_dir", help="directory to save data to", type=str, default=os.path.join(str(Path.home()), "glue_data")
     )
     parser.add_argument(
         "--tasks",
