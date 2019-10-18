@@ -135,7 +135,7 @@ def get_tasks(task_names):
 def main(arguments):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--data_dir", help="directory to save data to", type=str, default=os.path.join(str(Path.home()), "glue_data")
+        "--data_dir", help="directory to save data to", type=str, default=os.path.join(str(Path.home()), "nlp-data", "glue-data")
     )
     parser.add_argument(
         "--tasks",
