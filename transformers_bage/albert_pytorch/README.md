@@ -10,17 +10,17 @@ arxiv: https://arxiv.org/pdf/1909.11942.pdf
 
 ## Pre-LN and Post-LN
 
-* Post-LN: . 在原始的Transformer中，Layer Norm在跟在Residual之后的，我们把这个称为`Post-LN Transformer`
+* Post-LN: . In the original Transformer, after Layer Norm followed Residual, we called this `Post-LN Transformer`
 
-* Pre-LN: 把Layer Norm换个位置，比如放在Residual的过程之中（称为`Pre-LN Transformer`）
+* Pre-LN: Change the position of Layer Norm, for example in the process of Residual (called `Pre-LN Transformer`)
 
 ![](https://lonepatient-1257945978.cos.ap-chengdu.myqcloud.com/Selection_001.png)
 
 paper: [On Layer Normalization in the Transformer Architecture](https://openreview.net/forum?id=B1x8anVFPr)
 
-**使用方式**
+**Way of use**
 
-按照][brightmart](https://github.com/brightmart/albert_zh)大佬提供的模型权重文件，需要在配置文件中添加`ln_type`参数，如下：
+According to the model weight file provided by [brightmart] (https://github.com/brightmart/albert_zh), you need to add the `ln_type` parameter to the configuration file, as follows:
 
 ```json
 {
@@ -42,7 +42,7 @@ paper: [On Layer Normalization in the Transformer Architecture](https://openrevi
   "pooler_type": "first_token_transform", 
   "type_vocab_size": 2, 
   "vocab_size": 21128,
-   "ln_type":"postln"  # postln or preln
+  "ln_type":"postln"  # postln or preln
 }
 ```
 ## show type 
@@ -51,42 +51,42 @@ paper: [On Layer Normalization in the Transformer Architecture](https://openrevi
 
 modify the `share_type` parameter:
 
-* all: attention和FFN层参数都共享
-* ffn:　只共享FFN层参数
-* attention: 只共享attention层参数
-* None:  无参数共享
+* all: Attention and FFN layer parameters are shared
+* ffn:　Only share FFN layer parameters
+* attention: Only share the attention layer parameter
+* None:  No parameter sharing
 
-**使用方式**
+**Way of use**
 
-在加载`config`时，指定`share_type`参数，如下:
+When loading `config`, specify the `share_type` parameter as follows:
 
 ```python
 config = BertConfig.from_pretrained(bert_config_file,share_type=share_type)
 ```
 ## Download Pre-trained Models of Chinese
 
-感谢brightmart大佬提供中文模型权重：[github](https://github.com/brightmart/albert_zh)
+Thanks to Brightmart for providing Chinese model weights.：[github](https://github.com/brightmart/albert_zh)
 
-1. [albert_large_zh](https://storage.googleapis.com/albert_zh/albert_large_zh.zip) 参数量，层数24，大小为64M
+1. [albert_large_zh](https://storage.googleapis.com/albert_zh/albert_large_zh.zip) Parameter quantity, number of layers 24, size 64M
 
-2. [albert_base_zh(小模型体验版)](https://storage.googleapis.com/albert_zh/albert_base_zh.zip), 参数量12M, 层数12，大小为40M
+2. [albert_base_zh(Small model experience version)](https://storage.googleapis.com/albert_zh/albert_base_zh.zip), The parameter quantity is 12M, the number of layers is 12, and the size is 40M.
 
-3. [albert_xlarge_zh](https://storage.googleapis.com/albert_zh/albert_xlarge_zh.zip) 参数量，层数24，文件大小为230M
+3. [albert_xlarge_zh](https://storage.googleapis.com/albert_zh/albert_xlarge_zh.zip) The parameter quantity, the number of layers is 24, and the file size is 230M.
 
-## 预训练
+## Pre-training
 
-**n-gram**: 原始论文中按照以下分布随机生成n-gram，默认max_n为3
+**n-gram**: In the original paper, n-grams are randomly generated according to the following distribution, and the default max_n is 3
 
    <p align="center"><img width="200" src="https://lonepatient-1257945978.cos.ap-chengdu.myqcloud.com/n-gram.png" /></p>
-１．将文本数据转化为一行一句格式，并且不同document之间使用`\n`分割
+1. Convert text data into a one-line, one-sentence format, and use `\n` to split between different documents
 
-２．运行`python prepare_lm_data_ngram.py --do_data`分别生成ngram mask格式数据集
+2. Run `python prepare_lm_data_ngram.py --do_data` to generate the ngram mask format data set respectively.
 
-３．运行`python run_pretraining.py --share_type=all`进行模型预训练
+3. Run `python run_pretraining.py --share_type=all` for model pre-training
 
-** 模型大小**
+** Model size**
 
-以下是对`bert-base`进行实验的结果
+The following is the result of an experiment with `bert-base`
 
 | embedding_size | share_type | model_size |
 | :------- | :---------: | :---------: |
@@ -101,23 +101,23 @@ config = BertConfig.from_pretrained(bert_config_file,share_type=share_type)
 | 128 |all | 57.2M|
 
 
-## 下游任务Fine-tuning
+## Downstream task Fine-tuning
 
-１．下载预训练的albert模型
+1. Download the pre-trained albert model
 
-２．运行`python convert_albert_tf_checkpoint_to_pytorch.py`将TF模型权重转化为pytorch模型权重(默认情况下shar_type=all)
+2. Run `python convert_albert_tf_checkpoint_to_pytorch.py` to convert the TF model weights to the pytorch model weights (by default shar_type=all)
 
-３．下载对应的数据集，比如[LCQMC](https://drive.google.com/open?id=1HXYMqsXjmA5uIfu_SFqP7r_vZZG-m_H0)数据集，包含训练、验证和测试集，训练集包含24万口语化描述的中文句子对，标签为1或0。1为句子语义相似，0为语义不相似。
+3. Download the corresponding dataset, such as the [LCQMC] (https://drive.google.com/open?id=1HXYMqsXjmA5uIfu_SFqP7r_vZZG-m_H0) dataset, which contains training, validation, and test sets. The training set contains 240,000 colloquial descriptions of Chinese. Sentence pairs, the label is 1 or 0. 1 is semantically similar to sentences, and 0 is semantically dissimilar.
 
-４．运行`python run_classifier.py --do_train`进行Fine-tuning训练
+4. Run `python run_classifier.py --do_train` for Fine-tuning training
 
-5.　运行`python run_classifier.py --do_test`进行test评估
+5. Run `python run_classifier.py --do_test` to test evaluation
 
-## 结果
+## Results
 
-问题匹配语任务：LCQMC(Sentence Pair Matching)
+Question matching language task: LCQMC (Sentence Pair Matching)
 
-| 模型 | 开发集(Dev) | 测试集(Test) |
+Model | Development Set (Dev) | Test Set (Test) |
 | :------- | :---------: | :---------: |
 | ALBERT-zh-base(tf) | 86.4 | 86.3 |
 | ALBERT-zh-base(pytorch) | 87.4 | 86.4 |
