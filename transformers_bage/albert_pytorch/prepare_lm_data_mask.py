@@ -221,7 +221,7 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--data_name', default='albert', type=str)
+    parser.add_argument('--data_name', default='bert', type=str)
     parser.add_argument("--do_data", default=False, action='store_true')
     parser.add_argument("--do_split", default=False, action='store_true')
     parser.add_argument("--do_lower_case", default=False, action='store_true')
