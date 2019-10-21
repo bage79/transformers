@@ -2,7 +2,7 @@ from pathlib import Path
 
 BASE_DIR = Path('.')
 config = {
-    'data_dir': BASE_DIR / 'dataset/lcqmc',
+    'data_dir': BASE_DIR / 'dataset',
     'log_dir': BASE_DIR / 'outputs/logs',
     'figure_dir': BASE_DIR / "outputs/figure",
     'outputs': BASE_DIR / 'outputs',
