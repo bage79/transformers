@@ -1,4 +1,3 @@
-# encoding:utf-8
 import numpy as np
 import torch
 from sklearn.metrics import f1_score, classification_report
@@ -26,9 +25,9 @@ class Metric:
 
 
 class Accuracy(Metric):
-    '''
-    计算准确度
-    可以使用topK参数设定计算K准确度
+    """
+    Calculation accuracy
+     K accuracy can be calculated using the top K parameter setting
     Example:
         >>> metrics = Accuracy(**)
         >>> for epoch in range(epochs):
@@ -37,7 +36,7 @@ class Accuracy(Metric):
         >>>         logits = model()
         >>>         metrics(logits,target)
         >>>         print(metrics.name(),metrics.value())
-    '''
+    """
 
     def __init__(self, topK):
         super(Accuracy, self).__init__()
@@ -63,9 +62,9 @@ class Accuracy(Metric):
 
 
 class AccuracyThresh(Metric):
-    '''
-    计算准确度
-    可以使用topK参数设定计算K准确度
+    """
+    Calculation accuracy
+     K accuracy can be calculated using the top K parameter setting
     Example:
         >>> metrics = AccuracyThresh(**)
         >>> for epoch in range(epochs):
@@ -74,7 +73,7 @@ class AccuracyThresh(Metric):
         >>>         logits = model()
         >>>         metrics(logits,target)
         >>>         print(metrics.name(),metrics.value())
-    '''
+    """
 
     def __init__(self, thresh=0.5):
         super(AccuracyThresh, self).__init__()
@@ -99,7 +98,7 @@ class AccuracyThresh(Metric):
 
 
 class AUC(Metric):
-    '''
+    """
     AUC score
     micro:
             Calculate metrics globally by considering each element of the label
@@ -120,7 +119,7 @@ class AUC(Metric):
         >>>         logits = model()
         >>>         metrics(logits,target)
         >>>         print(metrics.name(),metrics.value())
-    '''
+    """
 
     def __init__(self, task_type='binary', average='binary'):
         super(AUC, self).__init__()
@@ -132,9 +131,9 @@ class AUC(Metric):
         self.average = average
 
     def __call__(self, logits, target):
-        '''
-        计算整个结果
-        '''
+        """
+        Calculate the entire result
+        """
         if self.task_type == 'binary':
             self.y_prob = logits.sigmoid().data.cpu().numpy()
         else:
@@ -146,9 +145,9 @@ class AUC(Metric):
         self.y_true = 0
 
     def value(self):
-        '''
-        计算指标得分
-        '''
+        """
+        Calculate the indicator score
+        """
         auc = roc_auc_score(y_score=self.y_prob, y_true=self.y_true, average=self.average)
         return auc
 
@@ -157,7 +156,7 @@ class AUC(Metric):
 
 
 class F1Score(Metric):
-    '''
+    """
     F1 Score
     binary:
             Only report results for the class specified by ``pos_label``.
@@ -181,7 +180,7 @@ class F1Score(Metric):
         >>>         logits = model()
         >>>         metrics(logits,target)
         >>>         print(metrics.name(),metrics.value())
-    '''
+    """
 
     def __init__(self, thresh=0.5, normalizate=True, task_type='binary', average='binary', search_thresh=False):
         super(F1Score).__init__()
@@ -195,11 +194,11 @@ class F1Score(Metric):
         self.average = average
 
     def thresh_search(self, y_prob):
-        '''
-        对于f1评分的指标，一般我们需要对阈值进行调整，一般不会使用默认的0.5值，因此
-        这里我们队Thresh进行优化
+        """
+        For the index of the f1 score, generally we need to adjust the threshold, generally do not use the default value of 0.5, so
+         Here our team Thresh optimizes
         :return:
-        '''
+        """
         best_threshold = 0
         best_score = 0
         for threshold in tqdm([i * 0.01 for i in range(100)], disable=True):
@@ -211,10 +210,10 @@ class F1Score(Metric):
         return best_threshold, best_score
 
     def __call__(self, logits, target):
-        '''
-        计算整个结果
+        """
+        Calculate the entire result
         :return:
-        '''
+        """
         self.y_true = target.cpu().numpy()
         if self.normalizate and self.task_type == 'binary':
             y_prob = logits.sigmoid().data.cpu().numpy()
@@ -239,9 +238,9 @@ class F1Score(Metric):
         self.y_true = 0
 
     def value(self):
-        '''
-         计算指标得分
-         '''
+        """
+        Calculate the indicator score
+        """
         if self.task_type == 'binary':
             f1 = f1_score(y_true=self.y_true, y_pred=self.y_pred, average=self.average)
             return f1
@@ -254,9 +253,9 @@ class F1Score(Metric):
 
 
 class ClassReport(Metric):
-    '''
+    """
     class report
-    '''
+    """
 
     def __init__(self, target_names=None):
         super(ClassReport).__init__()
@@ -267,9 +266,9 @@ class ClassReport(Metric):
         self.y_true = 0
 
     def value(self):
-        '''
-        计算指标得分
-        '''
+        """
+        Calculate the indicator score
+        """
         score = classification_report(y_true=self.y_true, y_pred=self.y_pred, target_names=self.target_names)
         print(f"\n\n classification report: {score}")
 
@@ -283,9 +282,9 @@ class ClassReport(Metric):
 
 
 class MultiLabelReport(Metric):
-    '''
+    """
     multi label report
-    '''
+    """
 
     def __init__(self, id2label=None):
         super(MultiLabelReport).__init__()
@@ -300,9 +299,9 @@ class MultiLabelReport(Metric):
         self.y_true = target.cpu().numpy()
 
     def value(self):
-        '''
-        计算指标得分
-        '''
+        """
+        Calculate the indicator score
+        """
         for i, label in self.id2label.items():
             auc = roc_auc_score(y_score=self.y_prob[:, i], y_true=self.y_true[:, i])
             print(f"label:{label} - auc: {auc:.4f}")
