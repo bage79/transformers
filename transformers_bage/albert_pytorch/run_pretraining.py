@@ -22,7 +22,7 @@ from transformers_bage.albert_pytorch.model.optimization import AdamW, WarmupLin
 from transformers_bage.albert_pytorch.model.tokenization_bert import BertTokenizer
 
 InputFeatures = namedtuple("InputFeatures", "input_ids input_mask segment_ids lm_label_ids is_next")
-init_logger(log_file=config['log_dir'] / ("train_albert_model.log"))
+init_logger(log_file=config['log_dir'] / "train_albert_model.log")
 
 
 def convert_example_to_features(example, tokenizer, max_seq_length):

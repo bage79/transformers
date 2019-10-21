@@ -1,6 +1,8 @@
+# coding: utf8
 import collections
 import json
 import os
+import platform
 import random
 from argparse import ArgumentParser
 
@@ -253,7 +255,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--data_name', default='albert', type=str)
     parser.add_argument("--do_data", default=False, action='store_true')
-    parser.add_argument("--do_split", default=False, action='store_true')
+    parser.add_argument("--do_split", default=True, action='store_true')
     parser.add_argument("--do_lower_case", default=False, action='store_true')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument("--line_per_file", default=1000000000, type=int)
@@ -270,15 +272,19 @@ def main():
     args = parser.parse_args()
     seed_everything(args.seed)
     logger.info("pregenerate training data parameters:\n %s", args)
-    tokenizer = BertTokenizer(vocab_file=config['data_dir'] / 'vocab.txt', do_lower_case=args.do_lower_case)
+    # tokenizer = BertTokenizer(vocab_file=config['data_dir'] / 'bert-base-uncased-vocab.txt', do_lower_case=args.do_lower_case)
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
     if args.do_split:
-        corpus_path = config['data_dir'] / "corpus/corpus.txt"
+        corpus_path = config['data_dir'] / "corpus/book-corpus.sample.txt"
         split_save_path = config['data_dir'] / "corpus/train"
         if not split_save_path.exists():
             split_save_path.mkdir(exist_ok=True)
         line_per_file = args.line_per_file
-        command = f'split -a 4 -l {line_per_file} -d {corpus_path} {split_save_path}/shard_'
+        if platform.system() == 'Darwin':
+            command = f'split -a 4 -l {line_per_file} {corpus_path} {split_save_path}/shard_'
+        else:
+            command = f'split -a 4 -l {line_per_file} -d {corpus_path} {split_save_path}/shard_'
         os.system(f"{command}")
 
     if args.do_data:
