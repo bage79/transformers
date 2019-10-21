@@ -47,7 +47,7 @@ class BertForMaskedLM(BertPreTrainedModel):
     """
 
     def __init__(self, config):
-        super(BertForMaskedLM, self).__init__(config)
+        super().__init__(config)
 
         self.bert = BertModel(config)
         self.cls = BertOnlyMLMHead(config)
@@ -116,7 +116,7 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
     """
 
     def __init__(self, config):
-        super(BertForNextSentencePrediction, self).__init__(config)
+        super().__init__(config)
 
         self.bert = BertModel(config)
         self.cls = BertOnlyNSPHead(config)
@@ -181,7 +181,7 @@ class BertForMultipleChoice(BertPreTrainedModel):
     """
 
     def __init__(self, config):
-        super(BertForMultipleChoice, self).__init__(config)
+        super().__init__(config)
 
         self.bert = BertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -254,7 +254,7 @@ class BertForTokenClassification(BertPreTrainedModel):
     """
 
     def __init__(self, config):
-        super(BertForTokenClassification, self).__init__(config)
+        super().__init__(config)
         self.num_labels = config.num_labels
 
         self.bert = BertModel(config)
@@ -335,7 +335,7 @@ class BertForQuestionAnswering(BertPreTrainedModel):
     """
 
     def __init__(self, config):
-        super(BertForQuestionAnswering, self).__init__(config)
+        super().__init__(config)
         self.num_labels = config.num_labels
 
         self.bert = BertModel(config)

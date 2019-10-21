@@ -299,6 +299,7 @@ class BertIntermediate(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
+        # noinspection PyUnresolvedReferences
         if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -310,7 +311,7 @@ class BertIntermediate(nn.Module):
         return hidden_states
 
 
-class BertOutput(nn.Module):
+class ALBertOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
@@ -335,19 +336,19 @@ class BertLayer(nn.Module):
         if config.share_type == 'ffn':
             self.attention = nn.ModuleList([ALBertAttention(config) for _ in range(config.num_hidden_layers)])
             self.intermediate = BertIntermediate(config)
-            self.output = BertOutput(config)
+            self.output = ALBertOutput(config)
         elif config.share_type == 'attention':
             self.attention = ALBertAttention(config)
             self.intermediate = nn.ModuleList([BertIntermediate(config) for _ in range(config.num_hidden_layers)])
-            self.output = nn.ModuleList([BertOutput(config) for _ in range(config.num_hidden_layers)])
+            self.output = nn.ModuleList([ALBertOutput(config) for _ in range(config.num_hidden_layers)])
         elif config.share_type == 'all':
             self.attention = ALBertAttention(config)
             self.intermediate = BertIntermediate(config)
-            self.output = BertOutput(config)
+            self.output = ALBertOutput(config)
         else:  # config.share_type == None, same with bert
             self.attention = nn.ModuleList([ALBertAttention(config) for _ in range(config.num_hidden_layers)])
             self.intermediate = nn.ModuleList([BertIntermediate(config) for _ in range(config.num_hidden_layers)])
-            self.output = nn.ModuleList([BertOutput(config) for _ in range(config.num_hidden_layers)])
+            self.output = nn.ModuleList([ALBertOutput(config) for _ in range(config.num_hidden_layers)])
 
     def forward(self, hidden_states, attention_mask, layer_num, head_mask=None):
         if isinstance(self.attention, nn.ModuleList):
@@ -374,7 +375,7 @@ class BertLayer(nn.Module):
         return outputs
 
 
-class BertEncoder(nn.Module):
+class ALBertEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.output_attentions = config.output_attentions
@@ -435,6 +436,7 @@ class BertPredictionHeadTransform(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        # noinspection PyUnresolvedReferences
         if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
             self.transform_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -625,7 +627,7 @@ class BertModel(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.embeddings = ALBertEmbeddings(config)
-        self.encoder = BertEncoder(config)
+        self.encoder = ALBertEncoder(config)
         self.pooler = BertPooler(config)
 
         self.init_weights()

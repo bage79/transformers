@@ -35,6 +35,7 @@ class TokenizerUtilsTest(unittest.TestCase):
 
             for special_tok in tokenizer.all_special_tokens:
                 if six.PY2:
+                    # noinspection PyUnresolvedReferences
                     self.assertIsInstance(special_tok, unicode)
                 else:
                     self.assertIsInstance(special_tok, str)
