@@ -2,6 +2,7 @@
 import collections
 import json
 import os
+import platform
 import random
 from argparse import ArgumentParser
 
@@ -36,10 +37,9 @@ def create_instances_from_document(all_documents, document_index, max_seq_length
     """Creates `TrainingInstance`s for a single document.
      This method is changed to create sentence-order prediction (SOP) followed by idea from paper of ALBERT, 2019-08-28, brightmart
     """
-    document = all_documents[document_index]  # 得到一个文档
+    document = all_documents[document_index]  # Get a document
 
-    # Account for [CLS], [SEP], [SEP]
-    max_num_tokens = max_seq_length - 3
+    max_num_tokens = max_seq_length - 3  # Account for [CLS], [SEP], [SEP]
 
     # We *usually* want to fill up the entire sequence since we are padding
     # to `max_seq_length` anyways, so short sequences are generally wasted
@@ -49,7 +49,10 @@ def create_instances_from_document(all_documents, document_index, max_seq_length
     # The `target_seq_length` is just a rough target however, whereas
     # `max_seq_length` is a hard limit.
     target_seq_length = max_num_tokens
-    if random.random() < short_seq_prob:  # There is a certain ratio, such as a 10% probability, we use a shorter sequence length to alleviate the inconsistency of the long sequence of pre-training and the short sequence of possible (possible) tuning phases
+    if random.random() < short_seq_prob:
+        # There is a certain ratio, such as a 10% probability, we use a shorter
+        # sequence length to alleviate the inconsistency of the long sequence of
+        # pre-training and the short sequence of possible (possible) tuning phases
         target_seq_length = random.randint(2, max_num_tokens)
 
     # We DON'T just concatenate all of the tokens from a document into a long
@@ -144,6 +147,7 @@ def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq
 
     num_to_mask = min(max_predictions_per_seq, max(1, int(round(len(tokens) * masked_lm_prob))))
     random.shuffle(cand_indices)
+
     mask_indices = sorted(random.sample(cand_indices, num_to_mask))
     masked_token_labels = []
     for index in mask_indices:
@@ -205,8 +209,9 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
                 masked_lm_prob, max_predictions_per_seq, vocab_words))
         pbar(step=document_index)
     print(' ')
-    ex_idx = 0
-    while ex_idx < 5:
+    for ex_idx in range(1):
+        if len(instances) <= ex_idx:
+            break
         instance = instances[ex_idx]
         logger.info("-------------------------Example-----------------------")
         logger.info(f"id: {ex_idx}")
@@ -216,19 +221,21 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
         logger.info(f"masked_lm_positions: {' '.join([str(x) for x in instance['masked_lm_positions']])}")
         logger.info(f"is_random_next : {instance['is_random_next']}")
         ex_idx += 1
+
     random.shuffle(instances)
     return instances
 
 
 def main():
+    is_debug_mode = True
     parser = ArgumentParser()
     parser.add_argument('--data_name', default='bert', type=str)
-    parser.add_argument("--do_data", default=False, action='store_true')
+    parser.add_argument("--do_data", default=True, action='store_true')
     parser.add_argument("--do_split", default=False, action='store_true')
     parser.add_argument("--do_lower_case", default=False, action='store_true')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument("--line_per_file", default=1000000000, type=int)
-    parser.add_argument("--file_num", type=int, default=10,
+    parser.add_argument("--file_num", type=int, default=10 if not is_debug_mode else 2,
                         help="Number of dynamic masking to pregenerate (with different masks)")
     parser.add_argument("--max_seq_len", type=int, default=128)
     parser.add_argument("--short_seq_prob", type=float, default=0.1,
@@ -240,24 +247,32 @@ def main():
     args = parser.parse_args()
     seed_everything(args.seed)
     logger.info("pregenerate training data parameters:\n %s", args)
-    tokenizer = BertTokenizer(vocab_file=config['data_dir'] / 'vocab.txt', do_lower_case=args.do_lower_case)
+    # tokenizer = BertTokenizer(vocab_file=config['data_dir'] / 'bert-base-uncased-vocab.txt', do_lower_case=args.do_lower_case)
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
     if args.do_split:
-        corpus_path = config['data_dir'] / "corpus/corpus.txt"
-        split_save_path = config['data_dir'] / "corpus/train"
+        corpus_path = config['data_dir'] / "corpus/100970__ties-to-the-blood-moon.txt"
+        split_save_path = config['data_dir'] / "corpus/splitted"
         if not split_save_path.exists():
             split_save_path.mkdir(exist_ok=True)
         line_per_file = args.line_per_file
-        command = f'split -a 4 -l {line_per_file} -d {corpus_path} {split_save_path}/shard_'
+        if platform.system() == 'Darwin':  # OSX
+            command = f'split -a 4 -l {line_per_file} {corpus_path} {split_save_path}/shard_'
+        else:  # Linux
+            command = f'split -a 4 -l {line_per_file} -d {corpus_path} {split_save_path}/shard_'
         os.system(f"{command}")
 
     if args.do_data:
-        data_path = config['data_dir'] / "corpus/train"
-        files = sorted([f for f in config['data_dir'].iterdir() if f.exists() and '.txt' in str(f)])
+        data_path = config['data_dir'] / "corpus/splitted" if args.do_split else config['data_dir'] / "corpus"
+        output_path = config['data_dir'] / "train"
+        files = sorted([f for f in data_path.iterdir() if os.path.isfile(f)])
+
+        if len(files) == 0:
+            raise Exception('no data file in "%s"' % data_path)
 
         for idx in range(args.file_num):
-            logger.info(f"pregenetate file_{idx}.json")
-            save_filename = data_path / f"{args.data_name}_file_{idx}.json"
+            logger.info(f"pregenetate {args.data_name}_file_{idx}.json")
+            save_filename = output_path / f"{args.data_name}_file_{idx}.json"
             num_instances = 0
             with save_filename.open('w') as fw:
                 for file_idx in range(len(files)):
@@ -272,7 +287,7 @@ def main():
                     for instance in file_examples:
                         fw.write(instance + '\n')
                         num_instances += 1
-            metrics_file = data_path / f"{args.data_name}_file_{idx}_metrics.json"
+            metrics_file = output_path / f"{args.data_name}_file_{idx}_metrics.json"
             print(f"num_instances: {num_instances}")
             with metrics_file.open('w') as metrics_file:
                 metrics = {
