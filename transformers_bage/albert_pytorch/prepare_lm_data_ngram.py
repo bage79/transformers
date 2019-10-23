@@ -162,33 +162,30 @@ def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq
 
     masked_token_labels = []
     covered_indices = set()
-    for index in cand_indices:
+    for _index in cand_indices:
         n = np.random.choice(ngrams, p=pvals)
         if len(masked_token_labels) >= num_to_mask:
             break
 
-        if index in covered_indices:
+        if _index in covered_indices:
             continue
 
-        if index < len(cand_indices) - (n - 1):
+        if _index < len(cand_indices) - (n - 1):
             for i in range(n):
-                ind = index + i
-                if ind in covered_indices:
+                index = _index + i
+                if index in covered_indices:
                     continue
-                covered_indices.add(ind)
-                # 80% of the time, replace with [MASK]
-                if random.random() < 0.8:
+                covered_indices.add(index)
+                if random.random() < 0.8:  # 80% of the time, replace with [MASK]
                     masked_token = "[MASK]"
                 else:
-                    # 10% of the time, keep original
-                    if random.random() < 0.5:
-                        masked_token = tokens[ind]
-                    # 10% of the time, replace with random word
-                    else:
+                    if random.random() < 0.5:  # 10% of the time, keep original
+                        masked_token = tokens[index]
+                    else:  # 10% of the time, replace with random word
                         masked_token = random.choice(vocab_list)
 
-                masked_token_labels.append(MaskedLmInstance(index=ind, label=tokens[ind]))
-                tokens[ind] = masked_token
+                masked_token_labels.append(MaskedLmInstance(index=index, label=tokens[index]))
+                tokens[index] = masked_token
     masked_token_labels = sorted(masked_token_labels, key=lambda x: x.index)
     mask_indices = []
     masked_labels = []

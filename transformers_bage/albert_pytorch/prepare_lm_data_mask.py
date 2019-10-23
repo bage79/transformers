@@ -4,6 +4,7 @@ import json
 import os
 import platform
 import random
+import sys
 from argparse import ArgumentParser
 
 from tqdm import tqdm
@@ -94,7 +95,8 @@ def create_instances_from_document(all_documents, document_index, max_seq_length
                 # Have a 50% probability of swapping the locations of tokens_a and tokens_b
                 # print("tokens_a length1:",len(tokens_a))
                 # print("tokens_b length1:",len(tokens_b)) # len(tokens_b) = 0
-                if len(tokens_a) == 0 or len(tokens_b) == 0: continue
+                if len(tokens_a) == 0 or len(tokens_b) == 0:
+                    continue
                 if random.random() < 0.5:  # Exchange tokens_a and tokens_b
                     is_random_next = True
                     temp = tokens_a
@@ -162,8 +164,8 @@ def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq
             # 10% of the time, replace with random word
             else:
                 masked_token = random.choice(vocab_list)
-            masked_token_labels.append(MaskedLmInstance(index=index, label=tokens[index]))
-            tokens[index] = masked_token
+        masked_token_labels.append(MaskedLmInstance(index=index, label=tokens[index]))
+        tokens[index] = masked_token
     masked_token_labels = sorted(masked_token_labels, key=lambda x: x.index)
     mask_indices = []
     masked_labels = []
@@ -185,7 +187,7 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
     # that the "next sentence prediction" task doesn't span between documents.
     f = open(input_file, 'r')
     lines = f.readlines()
-    pbar = tqdm(total=len(lines), desc='read data')
+    pbar = tqdm(total=len(lines), desc='read data', file=sys.stdout)
     for line_cnt, line in enumerate(lines):
         line = line.strip()
         # Empty lines are used as document delimiters
@@ -202,7 +204,7 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
 
     vocab_words = list(tokenizer.vocab.keys())
     instances = []
-    pbar = tqdm(total=len(all_documents), desc='create instances')
+    pbar = tqdm(total=len(all_documents), desc='create instances', file=sys.stdout)
     for document_index in range(len(all_documents)):
         instances.extend(
             create_instances_from_document(
