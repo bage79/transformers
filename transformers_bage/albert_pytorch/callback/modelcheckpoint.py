@@ -7,11 +7,11 @@ from ..common.tools import logger
 
 
 class ModelCheckpoint(object):
-    '''
-    模型保存，两种模式：
-    1. 直接保存最好模型
-    2. 按照epoch频率保存模型
-    '''
+    """
+    Model save, two modes:
+     1. Save the best model directly
+     2. Save the model according to the epoch frequency
+    """
 
     def __init__(self, checkpoint_dir,
                  monitor,
@@ -31,7 +31,7 @@ class ModelCheckpoint(object):
         self.epoch_freq = epoch_freq
         self.save_best_only = save_best_only
 
-        # 计算模式
+        # Calculation mode
         if mode == 'min':
             self.monitor_op = np.less
             self.best = np.Inf
@@ -39,8 +39,8 @@ class ModelCheckpoint(object):
         elif mode == 'max':
             self.monitor_op = np.greater
             self.best = -np.Inf
-        # 这里主要重新加载模型时候
-        # 对best重新赋值
+        # here mainly when reloading the model
+        # Reassign the best
         if best:
             self.best = best
 
@@ -48,13 +48,13 @@ class ModelCheckpoint(object):
             self.model_name = f"BEST_{arch}_MODEL.pth"
 
     def epoch_step(self, state, current):
-        '''
-        正常模型
-        :param state: 需要保存的信息
-        :param current: 当前判断指标
-        :return:
-        '''
-        # 是否保存最好模型
+        """
+        Normal model
+         :param state: information to save
+         :param current: current judgment indicator
+         :return:
+        """
+        # Whether to save the best model
         if self.save_best_only:
             if self.monitor_op(current, self.best):
                 logger.info(f"\nEpoch {state['epoch']}: {self.monitor} improved from {self.best:.5f} to {current:.5f}")
@@ -62,7 +62,7 @@ class ModelCheckpoint(object):
                 state['best'] = self.best
                 best_path = self.base_path / self.model_name
                 torch.save(state, str(best_path))
-        # 每隔几个epoch保存下模型
+        # Save the model every few epoch
         else:
             filename = self.base_path / f"EPOCH_{state['epoch']}_{state[self.monitor]}_{self.arch}_MODEL.pth"
             if state['epoch'] % self.epoch_freq == 0:
@@ -70,12 +70,12 @@ class ModelCheckpoint(object):
                 torch.save(state, str(filename))
 
     def bert_epoch_step(self, state, current):
-        '''
-        适合bert类型模型，适合pytorch_transformer模块
-        :param state:
-        :param current:
-        :return:
-        '''
+        """
+        Suitable for bert type models, suitable for the pytorch_transformer module
+         :param state:
+         :param current:
+         :return:
+        """
         model_to_save = state['model']
         if self.save_best_only:
             if self.monitor_op(current, self.best):
