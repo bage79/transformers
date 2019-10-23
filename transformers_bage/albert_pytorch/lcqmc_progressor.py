@@ -2,8 +2,8 @@ import csv
 
 import torch
 from torch.utils.data import TensorDataset
+from tqdm.notebook import tqdm
 
-from transformers_bage.albert_pytorch.callback.progressbar import ProgressBar
 from transformers_bage.albert_pytorch.common.tools import logger
 from transformers_bage.albert_pytorch.model.tokenization_bert import BertTokenizer
 
@@ -27,9 +27,9 @@ class InputExample(object):
 
 
 class InputFeature(object):
-    '''
+    """
     A single set of features of data.
-    '''
+    """
 
     def __init__(self, input_ids, input_mask, segment_ids, label_id, input_len):
         self.input_ids = input_ids
@@ -85,10 +85,10 @@ class BertProcessor(object):
                 tokens_b.pop()
 
     def create_examples(self, lines, example_type, cached_examples_file):
-        '''
+        """
         Creates examples for data
-        '''
-        pbar = ProgressBar(n_total=len(lines), desc='create examples')
+        """
+        pbar = tqdm(total=len(lines), desc='create examples')
         if cached_examples_file.exists():
             logger.info("Loading examples from cached file %s", cached_examples_file)
             examples = torch.load(cached_examples_file)
@@ -102,13 +102,13 @@ class BertProcessor(object):
                 label = int(label)
                 example = InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label)
                 examples.append(example)
-                pbar(step=i)
+                pbar.update()
             logger.info("Saving examples into cached file %s", cached_examples_file)
             torch.save(examples, cached_examples_file)
         return examples
 
     def create_features(self, examples, max_seq_len, cached_features_file):
-        '''
+        """
         # The convention in BERT is:
         # (a) For sequence pairs:
         #  tokens:   [CLS] is this jack ##son ##ville ? [SEP] no it is not . [SEP]
@@ -116,8 +116,8 @@ class BertProcessor(object):
         # (b) For single sequences:
         #  tokens:   [CLS] the dog is hairy . [SEP]
         #  type_ids:   0   0   0   0  0     0   0
-        '''
-        pbar = ProgressBar(n_total=len(examples), desc='create features')
+        """
+        pbar = tqdm(total=len(examples), desc='create features')
         if cached_features_file.exists():
             logger.info("Loading features from cached file %s", cached_features_file)
             features = torch.load(cached_features_file)
@@ -172,7 +172,7 @@ class BertProcessor(object):
                                        label_id=label_id,
                                        input_len=input_len)
                 features.append(feature)
-                pbar(step=ex_id)
+                pbar.update()
             logger.info("Saving features into cached file %s", cached_features_file)
             torch.save(features, cached_features_file)
         return features

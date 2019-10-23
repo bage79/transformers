@@ -6,7 +6,8 @@ import platform
 import random
 from argparse import ArgumentParser
 
-from transformers_bage.albert_pytorch.callback.progressbar import ProgressBar
+from tqdm import tqdm
+
 from transformers_bage.albert_pytorch.common.tools import logger, init_logger
 from transformers_bage.albert_pytorch.common.tools import seed_everything
 from transformers_bage.albert_pytorch.configs.base import config
@@ -184,7 +185,7 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
     # that the "next sentence prediction" task doesn't span between documents.
     f = open(input_file, 'r')
     lines = f.readlines()
-    pbar = ProgressBar(n_total=len(lines), desc='read data')
+    pbar = tqdm(total=len(lines), desc='read data')
     for line_cnt, line in enumerate(lines):
         line = line.strip()
         # Empty lines are used as document delimiters
@@ -193,7 +194,7 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
         tokens = tokenizer.tokenize(line)
         if tokens:
             all_documents[-1].append(tokens)
-        pbar(step=line_cnt)
+        pbar.update()
     print(' ')
     # Remove empty documents
     all_documents = [x for x in all_documents if x]
@@ -201,13 +202,13 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
 
     vocab_words = list(tokenizer.vocab.keys())
     instances = []
-    pbar = ProgressBar(n_total=len(all_documents), desc='create instances')
+    pbar = tqdm(total=len(all_documents), desc='create instances')
     for document_index in range(len(all_documents)):
         instances.extend(
             create_instances_from_document(
                 all_documents, document_index, max_seq_len, short_seq_prob,
                 masked_lm_prob, max_predictions_per_seq, vocab_words))
-        pbar(step=document_index)
+        pbar.update()
     print(' ')
     for ex_idx in range(1):
         if len(instances) <= ex_idx:

@@ -4,8 +4,8 @@ import argparse
 
 import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler)
+from tqdm import tqdm
 
-from transformers_bage.albert_pytorch.callback.progressbar import ProgressBar
 from transformers_bage.albert_pytorch.common.metrics import Accuracy
 from transformers_bage.albert_pytorch.common.tools import AverageMeter
 from transformers_bage.albert_pytorch.common.tools import logger, init_logger
@@ -64,7 +64,7 @@ def train(args, train_dataloader, eval_dataloader, metrics, model):
     seed_everything(args.seed)
     for epoch in range(int(args.num_train_epochs)):
         tr_loss = AverageMeter()
-        pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
+        pbar = tqdm(total=len(train_dataloader), desc='Training')
         for step, batch in enumerate(train_dataloader):
             model.train()
             batch = tuple(t.to(args.device) for t in batch)
@@ -87,7 +87,8 @@ def train(args, train_dataloader, eval_dataloader, metrics, model):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
             tr_loss.update(loss.item(), n=1)
-            pbar(step, info={"loss": loss.item()})
+            pbar.set_description('loss: %s' % loss.item())
+            pbar.update()
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
@@ -123,7 +124,7 @@ def evaluate(args, model, eval_dataloader, metrics):
     metrics.reset()
     preds = []
     targets = []
-    pbar = ProgressBar(n_total=len(eval_dataloader), desc='Evaluating')
+    pbar = tqdm(total=len(eval_dataloader), desc='Evaluating')
     for bid, batch in enumerate(eval_dataloader):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
@@ -137,7 +138,7 @@ def evaluate(args, model, eval_dataloader, metrics):
             eval_loss.update(loss.item(), n=batch[0].size()[0])
         preds.append(logits.cpu().detach())
         targets.append(inputs['labels'].cpu().detach())
-        pbar(bid)
+        pbar.update()
     preds = torch.cat(preds, dim=0).cpu().detach()
     targets = torch.cat(targets, dim=0).cpu().detach()
     metrics(preds, targets)

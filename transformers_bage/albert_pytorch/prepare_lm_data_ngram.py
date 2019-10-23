@@ -4,11 +4,12 @@ import json
 import os
 import platform
 import random
+import sys
 from argparse import ArgumentParser
 
 import numpy as np
+from tqdm import tqdm
 
-from transformers_bage.albert_pytorch.callback.progressbar import ProgressBar
 from transformers_bage.albert_pytorch.common.tools import logger, init_logger
 from transformers_bage.albert_pytorch.common.tools import seed_everything
 from transformers_bage.albert_pytorch.configs.base import config
@@ -96,7 +97,8 @@ def create_instances_from_document(all_documents, document_index, max_seq_length
                 # Have a 50% probability of swapping the locations of tokens_a and tokens_b
                 # print("tokens_a length1:",len(tokens_a))
                 # print("tokens_b length1:",len(tokens_b)) # len(tokens_b) = 0
-                if len(tokens_a) == 0 or len(tokens_b) == 0: continue
+                if len(tokens_a) == 0 or len(tokens_b) == 0:
+                    continue
                 if random.random() < 0.5:  # Exchange tokens_a and tokens_b
                     is_random_next = True
                     temp = tokens_a
@@ -209,7 +211,7 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
     # that the "next sentence prediction" task doesn't span between documents.
     f = open(input_file, 'r')
     lines = f.readlines()
-    pbar = ProgressBar(n_total=len(lines), desc='read data')
+    pbar = tqdm(total=len(lines), desc='read data', file=sys.stdout)
     for line_cnt, line in enumerate(lines):
         line = line.strip()
         # Empty lines are used as document delimiters
@@ -218,7 +220,7 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
         tokens = tokenizer.tokenize(line)
         if tokens:
             all_documents[-1].append(tokens)
-        pbar(step=line_cnt)
+        pbar.update()
     print(' ')
     # Remove empty documents
     all_documents = [x for x in all_documents if x]
@@ -226,14 +228,14 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
 
     vocab_words = list(tokenizer.vocab.keys())
     instances = []
-    pbar = ProgressBar(n_total=len(all_documents), desc='create instances')
+    pbar = tqdm(total=len(all_documents), desc='create instances', file=sys.stdout)
     for document_index in range(len(all_documents)):
         instances.extend(
             create_instances_from_document(
                 all_documents, document_index, max_seq_len, short_seq_prob,
                 masked_lm_prob, max_predictions_per_seq, vocab_words,
                 max_ngram))
-        pbar(step=document_index)
+        pbar.update()
     print(' ')
     for ex_idx in range(1):
         if len(instances) <= ex_idx:
