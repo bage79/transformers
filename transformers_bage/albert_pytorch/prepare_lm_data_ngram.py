@@ -35,14 +35,12 @@ def truncate_seq_pair(tokens_a, tokens_b, max_num_tokens):
             trunc_tokens.pop()
 
 
-def create_instances_from_document(all_documents, document_index, max_seq_length, short_seq_prob,
+def create_instances_from_document(document, max_seq_length, short_seq_prob,
                                    masked_lm_prob, max_predictions_per_seq, vocab_words,
                                    max_ngram):
     """Creates `TrainingInstance`s for a single document.
      This method is changed to create sentence-order prediction (SOP) followed by idea from paper of ALBERT, 2019-08-28, brightmart
     """
-    document = all_documents[document_index]  # Get a document
-
     max_num_tokens = max_seq_length - 3  # Account for [CLS], [SEP], [SEP]
 
     # We *usually* want to fill up the entire sequence since we are padding
@@ -208,16 +206,14 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
     # that the "next sentence prediction" task doesn't span between documents.
     f = open(input_file, 'r')
     lines = f.readlines()
-    pbar = tqdm(total=len(lines), desc='read data', file=sys.stdout)
-    for line_cnt, line in enumerate(lines):
+    for line in tqdm(lines, desc='read data', file=sys.stdout):
         line = line.strip()
         # Empty lines are used as document delimiters
-        if not line:
+        if len(line) == 0:
             all_documents.append([])
         tokens = tokenizer.tokenize(line)
         if tokens:
             all_documents[-1].append(tokens)
-        pbar.update()
     print(' ')
     # Remove empty documents
     all_documents = [x for x in all_documents if x]
@@ -225,14 +221,12 @@ def create_training_instances(input_file, tokenizer, max_seq_len, short_seq_prob
 
     vocab_words = list(tokenizer.vocab.keys())
     instances = []
-    pbar = tqdm(total=len(all_documents), desc='create instances', file=sys.stdout)
-    for document_index in range(len(all_documents)):
+    for document in tqdm(all_documents, desc='create instances', file=sys.stdout):
         instances.extend(
             create_instances_from_document(
-                all_documents, document_index, max_seq_len, short_seq_prob,
+                document, max_seq_len, short_seq_prob,
                 masked_lm_prob, max_predictions_per_seq, vocab_words,
                 max_ngram))
-        pbar.update()
     print(' ')
     for ex_idx in range(1):
         if len(instances) <= ex_idx:
